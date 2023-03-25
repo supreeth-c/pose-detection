@@ -1,8 +1,8 @@
 ModelMonitoring:
-    monitoringScheduleName: human-pose-prediction-monitoring-schdule
+    monitoringScheduleName: human-pose-prediction-new-monitoring-schdule
     threshold: '1.0'
-    monitoringImageName: human-pose-prediction-monitoring-container
-    baseJobName: human-pose-prediction-monitoring-job
+    monitoringImageName: human-pose-prediction-new-monitoring-container
+    baseJobName: human-pose-prediction-new-monitoring-job
     processingOutput:
         s3DestinationPrefix: endpoint/monitoring_schedule
         outputName: result
@@ -10,9 +10,9 @@ ModelMonitoring:
     
     
 EndpointConfig:
-    modelName: human-pose-prediction-model
-    endpointConfigName: human-pose-prediction-config
-    endpointName: human-pose-prediction-endpoint
+    modelName: human-pose-prediction-new-model
+    endpointConfigName: human-pose-prediction-new-config
+    endpointName: human-pose-prediction-new-endpoint
     roleArn: arn:aws:iam::525419040953:role/CloudOps
     
     
@@ -26,7 +26,7 @@ Instance:
     instanceCount: 1
     
 InferenceConfig:
-    ecrInferenceImageName: human-pose-inferencing-container
+    ecrInferenceImageName: human-pose-inferencing-new-container
     
 DataCapture:
     initialSamplingPercentage: 100
@@ -34,7 +34,7 @@ DataCapture:
     
 S3Config:
     bucketName: mlops-aicoe
-    s3Prefix: human-pose/
+    s3Prefix: human-pose-new/
     realtimeS3Prefix: realtime/
     modelDir: model/
     dataCapture: endpoint/data_capture

@@ -24,12 +24,12 @@ account_id = boto3.client('sts').get_caller_identity()['Account']
 region = boto3.Session().region_name
 
 
-def _construct_inference_image_uri(project_params):
+def _construct_inference_image_uri(project_params, docker_file_path):
 
-    ecr_monitoring_imageName = build_push_docker_image(project_params)
+    ecr_monitoring_imageName = build_push_docker_image(project_params,docker_file_path)
     monitoring_image_uri = "{}.dkr.ecr.{}.amazonaws.com/{}:latest".format(
         account_id, region, ecr_monitoring_imageName)
-    logging.info("Monitoring Image URI", monitoring_image_uri)
+    logging.info(f"Monitoring Image URI, {monitoring_image_uri}")
     return monitoring_image_uri
 
 
@@ -84,17 +84,16 @@ def create_monitoring_schedule(project_params, monitoring_image_uri):
         schedule_cron_expression=CronExpressionGenerator.hourly(),
     )
 
-    logging.info("Describe Monitor Schedule: ", monitor.describe_schedule())
+    logging.info(f"Describe Monitor Schedule: , {monitor.describe_schedule()}")
 
     jobs = monitor.list_executions()
-    logging.info("Model Monitoring job Object:", jobs)
+    logging.info(f"Model Monitoring job Object:, {jobs}")
 
     if len(jobs) > 0:
         last_execution_desc = monitor.list_executions()[-1].describe()
-        logging.info("Monitoring Job execution description:",
-                     last_execution_desc)
-        logging.info(
-            f'\nExit Message: {last_execution_desc.get("ExitMessage", "None")}')
+        logging.info(f"Monitoring Job execution description:, {last_execution_desc}")
+        execu_desc = last_execution_desc.get("ExitMessage", "None")
+        logging.info(f"\nExit Message: {execu_desc}")
 
     else:
         logging.info("""No processing job has been executed yet. 
@@ -108,8 +107,9 @@ if __name__ == '__main__':
 
     config_path = os.path.join(
         os.getcwd(), "deployment", "realtime_endpoint_deployment", "config.yml")
-    logging.info("Config Path", config_path)
+    logging.info(f"Config Path, {config_path}")
+    docker_file_path = os.path.join(os.getcwd(), "docker", "inference", "Dockerfile")
+    logging.info(f"Docker file Path, {docker_file_path}")
     project_params = read_config(config_path)
-    monitoring_image_uri = _construct_inference_image_uri(project_params)
-
+    monitoring_image_uri = _construct_inference_image_uri(project_params, docker_file_path)
     create_monitoring_schedule(project_params, monitoring_image_uri)

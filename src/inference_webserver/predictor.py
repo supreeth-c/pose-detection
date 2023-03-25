@@ -53,7 +53,7 @@ def create_presigned_url(bucket_name, object_name, expiration=3600):
 
 def load_model():
     path = os.path.join(model_path, 'model.tflite')
-    logging.info("Model Path", path)
+    logging.info(f"Model Path, {path}")
     interpreter = tf.lite.Interpreter(model_path=path)
     interpreter.allocate_tensors()
     return interpreter
@@ -142,12 +142,12 @@ def inference():
     """
 
     # log content_type using logger
-    logging.info("Flask request", flask.request)
-    logging.info("content_type", flask.request.content_type)
+    logging.info(f"Flask request, {flask.request}")
+    logging.info(f"content_type, {flask.request.content_type}")
 
     if flask.request.content_type == "application/x-npy":
         input_data = flask.request.data
-        logging.info("input_data", input_data)
+        logging.info(f"input_data, {input_data}")
         result = {
             "resourceType": "OperationOutcome",
             "issue": [
@@ -165,19 +165,19 @@ def inference():
         return flask.Response(response=result, status=400, mimetype="application/json")
 
     elif flask.request.content_type == "application/json":
-        logging.info("Flask request data", flask.request.data)
+        logging.info(f"Flask request data, {flask.request.data}")
         json_data = json.loads(flask.request.data)
-        logging.info("json data", json_data)
+        logging.info(f"json data, {json_data}")
         input_path = json_data["image_ref"]
-        logging.info("input_path", input_path)
+        logging.info(f"input_path, {input_path}")
         objectPath = urlparse(input_path)
         bucket = objectPath.netloc
         key = objectPath.path[1:]
         fileName = os.path.basename(objectPath.path)
 
-        logging.info("bucket", bucket)
-        logging.info("Object key", key)
-        logging.info("File Name", fileName)
+        logging.info(f"bucket, {bucket}")
+        logging.info(f"Object key, {key}")
+        logging.info(f"File Name, {fileName}")
 
         preSignedUrl = create_presigned_url(bucket, key)
         urllib.request.urlretrieve(preSignedUrl, fileName)
