@@ -1,0 +1,15 @@
+Pillow
+torch
+torchvision
+Flask
+smdebug==0.5.0
+protobuf==3.19.4
+imageio
+opencv-python
+git+https://github.com/tensorflow/docs
+matplotlib
+numpy
+tensorflow
+tensorflow_hub
+ipython
+sagemaker
