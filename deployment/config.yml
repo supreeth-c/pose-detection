@@ -1,17 +1,17 @@
 ModelMonitoring:
-    monitoringScheduleName: human-pose-prediction-monitoring-schdule
+    monitoringScheduleName: hp-prediction-monitoring-schdule
     threshold: "1.0"
-    monitoringImageName: human-pose-prediction-monitoring-container
-    baseJobName: human-pose-prediction-monitoring-job
+    monitoringImageName: hp-prediction-monitoring-container
+    baseJobName: hp-prediction-monitoring-job
     processingOutput:
         s3DestinationPrefix: endpoint/monitoring_schedule
         outputName: result
         mlDefaultResultSource: /opt/ml/processing/resultdata
 
 EndpointConfig:
-    modelName: human-pose-prediction-model
-    endpointConfigName: human-pose-prediction-config
-    endpointName: human-pose-prediction-endpoint
+    modelName: hp-prediction-model
+    endpointConfigName: hp-prediction-config
+    endpointName: hp-prediction-endpoint
     roleArn: arn:aws:iam::525419040953:role/CloudOps
 
 Instance:
@@ -19,16 +19,16 @@ Instance:
     instanceCount: 1
 
 InferenceConfig:
-    ecrInferenceImageName: human-pose-inferencing-container
+    ecrInferenceImageName: hp-inferencing-container
 
 DataCapture:
     initialSamplingPercentage: 100
     enableCapture: True
 
 S3Config:
-    bucketName: mlops-pipeline-human-pose-estimation
+    bucketName: mlops-pipeline-hp-estimation
     inputDir: inputdata/
-    s3Prefix: human-pose/
+    s3Prefix: hp/
     realtimeS3Prefix: realtime/
     outputDir: prediction/
     modelDir: model/
