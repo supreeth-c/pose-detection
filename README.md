@@ -6,16 +6,23 @@ The repository is to predict human joint location from JPG images that have a pi
 
 ## Table of Contents
 
- [Architecture Overview](#architecture-overview)
-
  [Demo](#demo)
 
+ [Architecture Overview](#architecture-overview)
+ 
  [Getting Started](#getting-started)
 
  [Running Tests Locally](#running-tests-locally)
 
+
+### Demo
+Here you will find a short video of the demo 
+
+
 ### Architecture Overview
 ![](./assets/workflow.png)
+
+
 
 
 ### Getting started
