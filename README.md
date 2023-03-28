@@ -16,7 +16,9 @@ The repository is to predict human joint location from JPG images that have a pi
 
 
 ### Demo
-Here you will find a short video of the demo 
+Here you will find a short video, highlighting the CD pipeline and its outcomes such as launching a webpage to predict human joints, contents of s3 bucket and its structure and cloudwatch logs on how the API are being invoked<br>
+
+https://user-images.githubusercontent.com/83901861/228391895-21d265b4-635b-4608-8283-472c9d7a8a8f.mp4
 
 
 ### Architecture Overview
