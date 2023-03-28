@@ -46,5 +46,3 @@ if __name__ == '__main__':
     project_params = read_config(config_path)
     replace_dict_values = upate_dict(config_path, project_params, gateway_url)
     read_replace_html(index_path, replace_dict_values)
-    with open(index_path, 'r') as file:
-        print(file.read())
