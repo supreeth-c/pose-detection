@@ -15,6 +15,9 @@ import json
 
 IMAGE_TEMPLATE = "{account}.dkr.ecr.{region}.amazonaws.com/{image_name}:{version}"
 
+access_key = os.environ['AWS_ACCESS_KEY_ID']
+secret_key = os.environ['AWS_SECRET_ACCESS_KEY']
+region = os.environ['region']
 
 def build_and_push_docker_image(repository_name, dockerfile, build_args={}):
     """Builds a docker image from the specified dockerfile, and pushes it to
@@ -60,16 +63,15 @@ def push(tag, aws_account=None, aws_region=None):
     Returns:
         (string): ECR repo image that was pushed
     """
-    session = boto3.Session()
-    aws_account = aws_account or session.client(
-        "sts").get_caller_identity()['Account']
+    session = boto3.Session(aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=region)
+    aws_account = aws_account or session.client("sts", aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=region).get_caller_identity()['Account'] 
     aws_region = aws_region or session.region_name
     try:
         repository_name, version = tag.split(':')
     except ValueError:  # split failed because no :
         repository_name = tag
         version = "latest"
-    ecr_client = session.client('ecr', region_name=aws_region)
+    ecr_client = session.client('ecr', aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=region)
 
     _create_ecr_repo(ecr_client, repository_name)
     _ecr_login(ecr_client, aws_account)
@@ -113,7 +115,7 @@ def _ecr_login(ecr_client, aws_account):
 
 
 def _ecr_login_if_needed(image):
-    ecr_client = boto3.client('ecr')
+    ecr_client = boto3.client('ecr',aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=region)
 
     # Only ECR images need login
     if not ('dkr.ecr' in image and 'amazonaws.com' in image):

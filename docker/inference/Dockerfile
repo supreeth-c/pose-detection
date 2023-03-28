@@ -16,7 +16,7 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
     libxext6 \
     && rm -rf /var/lib/apt/lists/*
 
-
+RUN export AWS_REGION="ap-south-1"
 
 # Here we get all python packages.
 # There's substantial overlap between scipy and numpy that we eliminate by

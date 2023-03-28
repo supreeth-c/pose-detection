@@ -17,7 +17,6 @@ cw_client = boto3.client('cloudwatch', region_name='ap-south-1')
 
 def get_environment():
     """Load configuration variables for SM Model Monitoring job
-    See https://docs.aws.amazon.com/sagemaker/latest/dg/model-monitor-byoc-contract-inputs.html
     """
     try:
         with open("/opt/ml/config/processingjobconfig.json", "r") as conffile:
@@ -60,6 +59,21 @@ def get_environment():
 
 
 def get_infra_stats(endpoint_name, start_time, end_time):
+    
+    """Retrieves infrastructure statistics for a given SageMaker endpoint between a specified start and end time. 
+    The function takes in the endpoint name, start time and end time as parameters and returns a list of dictionaries 
+    containing the requested statistics
+    
+    Args:
+        endpoint_name: A string representing the name of the SageMaker endpoint for which to retrieve infrastructure statistics.
+        start_time: A datetime object representing the start time of the period for which to retrieve statistics.
+        end_time: A datetime object representing the end time of the period for which to retrieve statistics.
+    
+    Returns:
+        metrics_report: A list of dictionaries containing the infrastructure statistics for the specified endpoint within the specified time period. 
+        Each dictionary contains the metric name and the corresponding datapoints for that metric.
+    """
+    
     metrics = [
         {'namespace': 'AWS/SageMaker', 'unit': 'Microseconds', 'name': 'ModelLatency', 'dimensions': [
             {'Name': 'EndpointName', 'Value': endpoint_name}, {'Name': 'VariantName', 'Value': 'AllTraffic'}]},
@@ -90,6 +104,19 @@ def get_infra_stats(endpoint_name, start_time, end_time):
 
 
 def average_and_time(matrix, len_matrix):
+    """Takes in a matrix and its length as input and returns the maximum average value and the corresponding timestamp from the matrix. 
+        The matrix is assumed to be a list of dictionaries where each dictionary contains two keys 'Average' and 'Timestamp'.
+        
+    Args:
+        matrix: A list of dictionaries where each dictionary contains two keys 'Average' and 'Timestamp'.
+        len_matrix: An integer representing the length of the matrix.
+        
+    Returns:
+        max_avg: A float representing the maximum average value in the matrix.
+        max_time: A string representing the timestamp corresponding to the maximum average value.
+
+    """
+    
     for i in range(len_matrix):
         if i == 0:
             max_avg = matrix[i]['Average']

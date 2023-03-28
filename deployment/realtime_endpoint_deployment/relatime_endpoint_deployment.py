@@ -9,22 +9,30 @@ from push_inference_webserver_ecr.inference_ecr_docker_deployment import read_co
 logging.basicConfig(
     filename='/var/log/inference_endpoint_deployment.log', level=logging.INFO)
 
-sm_client = boto3.client(service_name='sagemaker')
-runtime_sm_client = boto3.client(service_name='sagemaker-runtime')
+access_key = os.environ['AWS_ACCESS_KEY_ID']
+secret_key = os.environ['AWS_SECRET_ACCESS_KEY']
+session_token = os.environ['AWS_SESSION_TOKEN']
 
-account_id = boto3.client('sts').get_caller_identity()['Account']
+
+sm_client = boto3.client(service_name='sagemaker',
+                         aws_access_key_id=access_key, aws_secret_access_key=secret_key, aws_session_token=session_token)
+runtime_sm_client = boto3.client(service_name='sagemaker-runtime',
+                                 aws_access_key_id=access_key, aws_secret_access_key=secret_key, aws_session_token=session_token)
+account_id = boto3.client('sts', aws_access_key_id=access_key,
+                          aws_secret_access_key=secret_key, aws_session_token=session_token).get_caller_identity()['Account']
 region = boto3.Session().region_name
 
 
 def _construct_inference_image_uri(config_path, project_params, docker_file_path):
 
-    ecrInferenceImageName = build_push_docker_image(project_params, docker_file_path)
+    ecrInferenceImageName = build_push_docker_image(
+        project_params, docker_file_path)
     ecr_inference_image_name = ecrInferenceImageName.split("/")[1]
     inference_image_uri = "{}.dkr.ecr.{}.amazonaws.com/{}:latest".format(
         account_id, region, ecr_inference_image_name)
-    
-    print("INFERENCE_IMAGE_URI",inference_image_uri)
-    
+
+    print("INFERENCE_IMAGE_URI", inference_image_uri)
+
     logging.info(f"Inference Image URI, {inference_image_uri}")
     return inference_image_uri
 
@@ -32,7 +40,7 @@ def _construct_inference_image_uri(config_path, project_params, docker_file_path
 def create_model_response(project_params, inference_image_uri):
     modelName = project_params["EndpointConfig"]["modelName"]
     roleArn = project_params["EndpointConfig"]["roleArn"]
-    
+
     create_model_response = sm_client.create_model(
         ModelName=modelName,
         PrimaryContainer={
@@ -84,7 +92,8 @@ def create_endpoint_config_arn(project_params):
             'CaptureOptions': [{"CaptureMode": capture_mode} for capture_mode in capture_modes]
         }
     )
-    logging.info(f"Endpoint Configuration Arn, {create_endpoint_config_response['EndpointConfigArn']}")
+    logging.info(
+        f"Endpoint Configuration Arn, {create_endpoint_config_response['EndpointConfigArn']}")
     return create_endpoint_config_response['EndpointConfigArn']
 
 
@@ -102,9 +111,9 @@ def _create_endpoint_arn(project_params):
 def create_endpoint(project_params):
     endpointName = project_params["EndpointConfig"]["endpointName"]
     endpoint_arn = _create_endpoint_arn(project_params)
-    
+
     print("ENDPOINT ARN", endpoint_arn)
-    
+
     resp = sm_client.describe_endpoint(EndpointName=endpointName)
     status = resp['EndpointStatus']
     logging.info(f"Endpoint Status, {status}")
@@ -124,7 +133,7 @@ if __name__ == '__main__':
     logging.info(f"Config Path, {config_path}")
     logging.info(f"Docker file Path, {docker_file_path}")
     project_params = read_config(config_path)
-    
+
     inference_image_uri = _construct_inference_image_uri(
         config_path, project_params, docker_file_path)
     model_arn = create_model_response(project_params, inference_image_uri)

@@ -1,0 +1,102 @@
+name: Deploy Inference Endpoint and API
+
+on:
+  push:
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  region: "ap-south-1"
+  AWS_DEFAULT_REGION: "ap-south-1"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.10.8
+
+      - name: Checkout the repo code
+        uses: actions/checkout@v3
+        with:
+          path: pose-estimation
+          clean: true
+
+      - name: Set AWS credentials as environment variables
+        run: |
+          echo "Setting AWS credentials as environment variables"
+          export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+          export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+          export region=$region
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          cd pose-estimation
+          pip install -r deployment/requirements.txt
+
+      - name: Trigger Real-time Inferencing Pipeline for Pre-Trained Model deployment
+        run: |
+          cd pose-estimation
+          python3 deployment/realtime_endpoint_deployment/realtime_endpoint_deployment.py
+
+      - name: Attaching Model Monitoring Pipeline for Real-time Inferencing end point
+        run: |
+          cd pose-estimation
+          python3 deployment/model_monitoring_deployment/model_monitoring_deployment.py
+
+      - name: Install AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli
+
+      - name: Run CloudFormation Stack - API Gateway & Lambda
+        env:
+          AWS_REGION: ap-south-1
+          STACK_NAME: mlops-pipeline-human-pose-prediction
+        run: |
+          export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+          export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+          export region=$region
+          cd pose-estimation/aws_stack
+          aws cloudformation create-stack --stack-name $STACK_NAME --region $AWS_REGION --template-body file://gateway_lamda_s3_website_creation.yml --capabilities CAPABILITY_IAM --parameters file://parameters.json
+
+      - name: Wait for stack to complete - API Gateway & Lambda
+        env:
+          AWS_REGION: ap-south-1
+          STACK_NAME: mlops-pipeline-human-pose-prediction
+        run: |
+          aws cloudformation wait stack-create-complete --stack-name $STACK_NAME --region $AWS_REGION || exit 1 # Fail if stack creation failed
+
+      - name: Stack Output & Update HTML - TEMP
+        env:
+          STACK_NAME: mlops-pipeline-human-pose-prediction
+        run: |
+          python -m pip install --upgrade pip
+          cd pose-estimation
+          pip install -r deployment/requirements.txt
+          python3 deployment/update_html.py "$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query 'Stacks[0].Outputs[0].['OutputValue'][0]' --output json)"
+          ls  -ltr
+          pwd
+
+      - name: Run CloudFormation Stack - Publish Public Human Pose Prediction WebSite
+        env:
+          AWS_REGION: ap-south-1
+          STACK_NAME: website
+          BUCKET_NAME: mlops-pipeline-humanpose-estimation-prediction-demo
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_GLOBAL_S3 }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_GLOBAL_S3 }}
+        run: |
+          export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+          export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+          export region=$region
+
+          cd pose-estimation/aws_stack
+          aws cloudformation create-stack --stack-name $STACK_NAME --region $AWS_REGION --template-body file://stack_static_website_s3_public.yml --capabilities CAPABILITY_IAM --parameters ParameterKey=s3Bucketname,ParameterValue=$BUCKET_NAME
+          aws cloudformation wait stack-create-complete --stack-name $STACK_NAME --region $AWS_REGION || exit 1 # Fail if stack creation failed      
+          cd ../website
+          aws s3 cp index.html s3://$BUCKET_NAME/index.html
+          aws s3 cp error.html s3://$BUCKET_NAME/error.html
+          output=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query 'Stacks[0].Outputs[1].['OutputValue'][0]' --output text)
+          echo "***************HUMAN POSE PREDICTION ENDPOINT URL***************: $output"

@@ -19,17 +19,18 @@ import tensorflow as tf
 import tensorflow_hub as hub
 import numpy as np
 from matplotlib import pyplot as plt
+import matplotlib.image
 from matplotlib.collections import LineCollection
 import matplotlib.patches as patches
 from helper import *
-
+cwd = os.getcwd()
 
 # Some modules to display an animation using imageio.
 input_size = 256
 
-
 # Configure logging
-logging.basicConfig(filename='/var/log/flask.log', level=logging.INFO)
+logging.basicConfig(
+    filename='{}/flask.log'.format(cwd), level=logging.INFO)
 
 # The flask app for serving predictions
 app = flask.Flask(__name__)
@@ -37,10 +38,27 @@ app = flask.Flask(__name__)
 prefix = "/opt/ml/"
 model_path = os.path.join(prefix, "model")
 
+region = os.environ['AWS_REGION']
+
+
+client_s3 = boto3.client('s3', region_name=region)
 
 def create_presigned_url(bucket_name, object_name, expiration=3600):
+    """Generate a presigned URL for accessing an S3 object
+    
+    Args:
+        bucket_name: A string representing the name of the S3 bucket where the object is located.
+        object_name: A string representing the key of the object to generate the presigned URL for.
+        expiration: An integer representing the expiration time of the URL in seconds. The default value is 3600 (1 hour).
+        
+    Returns:
+
+        response: A string representing the generated presigned URL.
+    
+    """
+    
     s3_client = boto3.client(
-        's3', region_name="ap-south-1", config=Config(signature_version='s3v4'))
+        's3', region_name=region, config=Config(signature_version='s3v4'))
     try:
         response = s3_client.generate_presigned_url('get_object',
                                                     Params={'Bucket': bucket_name,
@@ -52,6 +70,7 @@ def create_presigned_url(bucket_name, object_name, expiration=3600):
 
 
 def load_model():
+    """load a TensorFlow Lite model file located at the specified path"""
     path = os.path.join(model_path, 'model.tflite')
     logging.info(f"Model Path, {path}")
     interpreter = tf.lite.Interpreter(model_path=path)
@@ -73,13 +92,16 @@ def predict_movenet_for_image(input_image):
     """
     # load the model
     interpreter = load_model()
+    
     # TF Lite format expects tensor type of uint8.
     input_image = tf.cast(input_image, dtype=tf.uint8)
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
     interpreter.set_tensor(input_details[0]['index'], input_image.numpy())
+    
     # Invoke inference.
     interpreter.invoke()
+    
     # Get the model prediction.
     keypoints_with_scores = interpreter.get_tensor(output_details[0]['index'])
 
@@ -90,6 +112,7 @@ def load_input_image_resize_pad(image_path):
     """Loads image, resizes and pads it to keep the aspect ratio."""
     image = tf.io.read_file(image_path)
     image = tf.image.decode_jpeg(image)
+    
     # Resize and pad the image to keep the aspect ratio and fit the expected size.
     input_image = tf.expand_dims(image, axis=0)
     input_image = tf.image.resize_with_pad(input_image, input_size, input_size)
@@ -97,7 +120,22 @@ def load_input_image_resize_pad(image_path):
     return input_image, image
 
 
-def prediction(input_image, image):
+def prediction(input_image, image, filename, bucket):
+    
+    """Takes an input image and uses a machine learning model (MoveNet) to predict keypoints with scores for that image. 
+    It then visualizes the predictions on the original image and saves the resulting image to an S3 bucket. 
+    Finally, it returns a pre-signed URL that can be used to access the saved image.
+    
+    Args:
+        input_image: A NumPy array representing the input image for which keypoints are to be predicted.
+        image: A NumPy array representing the original image.
+        filename: A string representing the name of the file to be saved.
+        bucket: A string representing the name of the S3 bucket where the predicted image is to be stored.
+    
+    Returns:
+        A pre-signed URL (string) for the predicted image.
+    
+    """
 
     keypoints_with_scores = predict_movenet_for_image(input_image)
 
@@ -107,20 +145,17 @@ def prediction(input_image, image):
         display_image, 1280, 1280), dtype=tf.int32)
     output_overlay = draw_prediction_on_image(
         np.squeeze(display_image.numpy(), axis=0), keypoints_with_scores)
-
-    plt.figure(figsize=(5, 5))
-    plt.imshow(output_overlay)
-    plt.savefig('result.png')
-    _ = plt.axis('off')
-    plt.savefig("output_plot.png")
-
-    im = Image.open("output_plot.png")
-    data = io.BytesIO()
-    im.save(data, "png")
-    encoded_img_data = base64.b64encode(data.getvalue())
-    print(f"encoded_image : {encoded_img_data}")
-    decode_utf = encoded_img_data.decode('utf-8')
-    return decode_utf
+    
+    output_file_name = f'{filename}-predicted.jpeg'
+    matplotlib.image.imsave(output_file_name, output_overlay)
+    image_in = Image.fromarray(output_overlay).convert("RGB")
+    buffer = io.BytesIO()
+    image_in.save(buffer, format = 'jpeg')
+    buffer.seek(0)    
+    output_file = f"prediction/{output_file_name}"
+    client_s3.put_object(Bucket=bucket, Key=output_file, Body=buffer, ContentType='image/jpeg')
+    pre_singed_url = create_presigned_url(bucket, output_file, expiration=3600)
+    return pre_singed_url
 
 
 @app.route("/ping", methods=["GET"])
@@ -173,17 +208,17 @@ def inference():
         objectPath = urlparse(input_path)
         bucket = objectPath.netloc
         key = objectPath.path[1:]
-        fileName = os.path.basename(objectPath.path)
+        file_name = os.path.basename(objectPath.path)
 
         logging.info(f"bucket, {bucket}")
         logging.info(f"Object key, {key}")
-        logging.info(f"File Name, {fileName}")
+        logging.info(f"File Name, {file_name}")
 
         preSignedUrl = create_presigned_url(bucket, key)
-        urllib.request.urlretrieve(preSignedUrl, fileName)
+        urllib.request.urlretrieve(preSignedUrl, file_name)
 
-        input_image, image = load_input_image_resize_pad(fileName)
-        result = prediction(input_image, image)
+        input_image, image = load_input_image_resize_pad(file_name)
+        result = prediction(input_image, image, file_name, bucket)
 
         result = json.dumps(result)
 
