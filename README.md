@@ -101,11 +101,12 @@ Explanation for few of the keys
    ```
 ![](./assets/secrets.JPG)
 
- 4. With these modifications pushed into a branch and later upon raising a Pull Request to main branch only, the CD pipleine will get triggered.
+ 4. With these modifications pushed into a branch and later upon raising a Pull Request to main branch only, the CD pipleine will get triggered.<br>
  ![](./assets/actions_deployment.JPG)
 <br>
-5. Once the CD pipleine has been triggered, you can expect the following details in order
-    **INFERENCE IMAGE URI**<br>
+5. Once the CD pipleine has been triggered, you can expect the following details in order<br>
+  --**INFERENCE IMAGE URI**
+  <br>
   
   -- **SAGEMAKER REALTIME INFERNECE ENDPOINT URL**
   <br>
