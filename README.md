@@ -90,20 +90,23 @@ Explanation for few of the keys
 <br>
 3. Update the Github Actions secrets with two AWS unqiue account access and secret keys. 
    The below keys are used for deploying the AWS Sagemaker Real Time Endpoints and Monitoring pipeline via SDK-python
-    ```shell script
+    
+```shell script
     AWS_ACCESS_KEY_ID
     AWS_SECRET_ACCESS_KEY 
-    ```
+```
+
+
     The second set of key are only used to deploy the Static Webpage hosted in s3 bucket
-    ```shell script
+```shell script
     AWS_ACCESS_KEY_ID_GLOBAL_S3
     AWS_SECRET_ACCESS_KEY_GLOBAL_S3
-    ```
-    ![](./assets/secrets.JPG)
+```
+![](./assets/secrets.JPG)
 
  4. With these modifications pushed into a branch and later upon raising a Pull Request to main branch only, the CD pipleine will get triggered.
 <br>
-    ![](./assets/actions_deployment.JPG)
+![](./assets/actions_deployment.JPG)
 <br>
 5. Once the CD pipleine has been triggered, you can expect the following details in order
 <br>
@@ -111,13 +114,13 @@ Explanation for few of the keys
 <br>
 -- **SAGEMAKER REALTIME INFERNECE ENDPOINT URL**
 <br>
- ![](./assets/deployed_inferencing.JPG)
+![](./assets/deployed_inferencing.JPG)
 <br>
 -- **ATTACHING MONITORING TO ENDPOINT**
 <br>
- ![](./assets/deployment_monitoring.JPG)
+![](./assets/deployment_monitoring.JPG)
 <br>
 -- **WEB PAGE URL**
 <br>
- ![](./assets/endpoint_published.JPG)
+![](./assets/endpoint_published.JPG)
 
