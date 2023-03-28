@@ -1,0 +1,3 @@
+pyyaml
+sagemaker
+boto3

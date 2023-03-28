@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="Web site" />
+    <title>Human Pose Prediction</title>
+	<style>
+		body {
+			  background-color: rgb(0, 0, 0);
+		}
+    .btn {
+        background-color:rgb(221, 226, 229);
+        border-radius: 5px;
+        padding: 15px;
+    }
+    .atp {
+        background-color:rgb(203, 207, 210);
+        font-family: "Lucida Console", "Courier New", monospace;
+        font-size:15px;
+
+    }
+    .header{
+      color:rgb(255, 255, 255);
+      /* float: left; */
+      /* text-align: center; */
+      font-family: "Lucida Console", "Courier New", monospace;
+      font-size:50px;
+      text-align: center;
+      /* font-family: sans-serif; */
+    }
+	</style
+  </head>
+  <body>
+    <div>
+      <form action="" id="body">
+          <h1 class="header">Human Pose Prediction</h1>
+          <label for="files" class="btn">Select the Image</label>
+          <br>
+        
+        <input
+          onchange="upload()"
+          style="visibility:hidden;"
+          type="file"
+          id="files"
+          name="files[]"
+          multiple
+        />
+        <br />
+        <label class="atp">Please select JPG Image only of pixel size 256*256</label>
+      </form>
+      <p id="loading">Loading</p>
+      <img src="" id="display" style="width:50%;"/>
+    </div>
+      /* style="width:500px;height:600px;"/> */
+  </body>
+  <script>
+    const API_GATEWAY_URL = "REPLACE_GATEWAY_URL";
+    const BUCKETNAME = "REPLACE_BUCKET_NAME";
+    const ENDPOINTNAME = "REPLACE_ENDPOINT_NAME"
+    async function upload() { 
+      var myInput = document.getElementById("files");
+      var img = document.querySelector("#display");
+
+      var myHeaders = new Headers();
+      myHeaders.append("bucketname", BUCKETNAME);
+      myHeaders.append("filename", myInput.files[0].name);
+      myHeaders.append("endpointname", ENDPOINTNAME)
+
+      var requestOptions = {
+        method: "POST",
+        headers: myHeaders,
+        body: myInput.files[0],
+        redirect: "follow",
+      };
+
+      const fetchResponse = await fetch(
+        API_GATEWAY_URL,
+        requestOptions
+      );
+      const response = await fetchResponse.json();
+      var imageData = response.body.predicted_image.replace(/"/g, "");
+      img.setAttribute("src", imageData);
+    }
+  </script>
+</html>

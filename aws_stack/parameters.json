@@ -1,0 +1,12 @@
+[
+     { 
+        "ParameterKey": "apiGatewayName", 
+        "ParameterValue": "mlops-api" 
+    },
+     
+    { 
+        "ParameterKey": "apiGatewayStageName", 
+        "ParameterValue": "test" 
+    }
+    
+]

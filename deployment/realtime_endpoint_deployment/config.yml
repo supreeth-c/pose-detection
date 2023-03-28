@@ -1,0 +1,41 @@
+ModelMonitoring:
+    monitoringScheduleName: human-pose-prediction-new-monitoring-schdule
+    threshold: '1.0'
+    monitoringImageName: human-pose-prediction-new-monitoring-container
+    baseJobName: human-pose-prediction-new-monitoring-job
+    processingOutput:
+        s3DestinationPrefix: endpoint/monitoring_schedule
+        outputName: result
+        mlDefaultResultSource: /opt/ml/processing/resultdata
+    
+    
+EndpointConfig:
+    modelName: human-pose-prediction-new-model
+    endpointConfigName: human-pose-prediction-new-config
+    endpointName: human-pose-prediction-new-endpoint
+    roleArn: arn:aws:iam::525419040953:role/CloudOps
+    
+    
+PreTrainedModel:
+    localModelDir: model/
+    pretrainedModelName: model.pt
+    pretrainedTarModelName: model.tar.gz
+    
+Instance:
+    instanceType: ml.m5.xlarge
+    instanceCount: 1
+    
+InferenceConfig:
+    ecrInferenceImageName: human-pose-inferencing-new-container
+    
+DataCapture:
+    initialSamplingPercentage: 100
+    enableCapture: True
+    
+S3Config:
+    bucketName: mlops-aicoe
+    s3Prefix: human-pose-new/
+    realtimeS3Prefix: realtime/
+    modelDir: model/
+    dataCapture: endpoint/data_capture
+    tensors: endpoint/tensors
