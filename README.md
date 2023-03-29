@@ -1,7 +1,7 @@
 ## AWS Infrastructure and Deployment pipeline for an PreTrained ML Model
 
 
-The repository is to predict human joint location from JPG images that have a pixel size of 256*256. This will be done using the Movnet Singlepose thunder pretrained model, which will be deployed on AWS using CF and SDK to deploy inferencing and monitoring pipeline. The monitoring pipeline will be used to collect and analyze data on average inference time, memory usage, and compute power usage of the deployed model.
+The repository is to predict human joint location from JPG images that has a pixel size of 256*256. This will be done using the Movnet Singlepose thunder pretrained model, which will be deployed on AWS using CF and SDK to deploy inferencing and monitoring pipeline. The monitoring pipeline will be used to collect and analyze data on average inference time, memory usage, and compute power usage of the deployed model.
 
 
 ## Table of Contents
