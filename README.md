@@ -12,7 +12,6 @@ The repository is to predict human joint location from JPG images that have a pi
  
  [Getting Started](#getting-started)
 
- [Running Tests Locally](#running-tests-locally)
 
 
 ### Demo
